@@ -17,7 +17,8 @@ jobs:
 
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Git checkout
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -28,32 +29,6 @@ jobs:
 
     - name: Install dependencies
       run: pip3 install -U online-judge-verify-helper
-
-
-    - name: Assign test files
-      working-directory: main
-      run: |
-        TEST_FILES=$(
-          find verify -type f -name '*.test.cpp' | \
-          sort | \
-          awk -v n=${{ strategy.job-total }} \
-              -v i=${{ strategy.job-index }} \
-              '{
-                if((NR - 1) % n == i) {
-                  print $0
-                }
-              }' \
-          )
-
-        echo ${TEST_FILES} > .verify-helper/targets.txt
-        cat .verify-helper/targets.txt
-
-
-    - name: Run tests
-      env:
-        YUKICODER_TOKEN: ${{ secrets.YUKICODER_TOKEN }}
-        GH_PAT: ${{ secrets.GH_PAT }}
-      run: oj-verify all
 
     - name: Assign test files
       working-directory: main
@@ -80,22 +55,24 @@ jobs:
         YUKICODER_TOKEN: ${{ secrets.YUKICODER_TOKEN }}
       run: |
         set -eu
+
+        echo '{}' > ./.verify-helper/timestamps.json
+        
         if [ ! -f ./.verify-helper/timestamps.remote.json ]; then
           echo '{}' > ./.verify-helper/timestamps.remote.json
         fi
 
-        echo '{}' > ./.verify-helper/timestamps-${{ matrix.id }}.json
+        oj d https://judge.yosupo.jp/problem/aplusb &> /dev/null
 
-        function run() {
-          oj-verify run $1 --tle 5 || exit 1
-          cd .verify-helper
-          echo >> ./timestamps.remote.json
-          cat ./timestamps.remote.json >> ./timestamps-${{ matrix.id }}.json
-        }
-        export -f run
+        PARALLEL=$(nproc)
+        echo "Parallel execution: ${PARALLEL}"
 
         head -c -1 ./.verify-helper/targets.txt | \
-        xargs -t -I {} -d ' ' bash -c 'run {}'
+        xargs -P ${PARALLEL} -d ' ' -I {} bash ./.github/workflows/run-test.sh {}
+
+        jq --slurp --sort-keys 'reduce .[] as $item ({}; . * $item)' \
+        ./.verify-helper/timestamps.json > "./.verify-helper/timestamps-${{ matrix.id }}.json"
+        cat "./.verify-helper/timestamps-${{ matrix.id }}.json"
 
     - name: Save timestamps
       uses: actions/upload-artifact@v3
@@ -170,9 +147,6 @@ jobs:
     - name: Install oj-verify
       run: pip3 install -U online-judge-verify-helper
 
-    - name: Clone AC-Library
-      uses: actions/checkout@v3
-
     - working-directory: main
       run: git pull
 
@@ -180,4 +154,5 @@ jobs:
       working-directory: main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: oj-verify docs --jobs $(nproc)
+        GH_PAT: ${{ secrets.GH_PAT }}
+      run: rm -r /home/runner/work/_temp/
