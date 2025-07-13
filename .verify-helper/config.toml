@@ -1,0 +1,9 @@
+[[languages.cpp.environments]]
+CXX = "g++-12"
+CXXFLAGS = [
+    "-O2",
+    "-std=gnu++23",
+    "-fsanitize=undefined",
+    "-g",
+    "-I",
+]
