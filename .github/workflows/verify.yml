@@ -16,7 +16,7 @@ jobs:
         id: ['00', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19']
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: main
         fetch-depth: 0
@@ -74,7 +74,7 @@ jobs:
         xargs -t -I {} -d ' ' bash -c 'run {}'
 
     - name: Save timestamps
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
         name: timestamps
@@ -87,13 +87,13 @@ jobs:
 
     steps:
     - name: Git checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         sparse-checkout: .verify-helper
 
     - name: Load timestamps
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: timestamps
         path: .verify-helper/timestamps
@@ -133,7 +133,7 @@ jobs:
 
     steps:
     - name: Git checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: main
