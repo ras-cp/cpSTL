@@ -62,6 +62,7 @@ jobs:
       env:
         CACHE_HIT: ${{ steps.cache-judge.outputs.cache-hit }}
         YUKICODER_TOKEN: ${{ secrets.YUKICODER_TOKEN }}
+        GH_PAT: ${{ secrets.GH_PAT }}
       run: |
         set -eu
 
